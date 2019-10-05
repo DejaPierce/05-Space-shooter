@@ -12,7 +12,7 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 MARGIN = 20
 INITIAL_VELOCITY = 3
-NUM_ANIMALS = 5
+NUM_ENEMIES = 5
 SCREEN_TITLE = "Collision Exercise"
 
    
@@ -23,33 +23,32 @@ class Window(arcade.Window):
         super().__init__(width, height, title)
         self.set_mouse_visible(True)
         arcade.set_background_color(open_color.blue_4)
-        self.animal_list = arcade.SpriteList()
+        self.enemy_list = arcade.SpriteList()
 
     def setup(self):
-        animals = ['bear','buffalo','chick','chicken','cow','crocodile','dog','duck','elephant','frog','giraffe','goat','gorilla','hippo','horse','monkey','moose','narwhal','owl','panda','parrot','penguin','pig','rabbit','rhino','sloth','snake','walrus','whale','zebra']
-
-        for i in range(NUM_ANIMALS):
-            animal = random.choice(animals)
+        enemyships = ['ship2','ship3','ship4','ship6','ship7']
+        for i in range(NUM_ENEMIES):
+            enemy = random.choice(enemyships)
             x = random.randint(MARGIN,SCREEN_WIDTH-MARGIN)
             y = random.randint(MARGIN,SCREEN_HEIGHT-MARGIN)
             dx = random.uniform(-INITIAL_VELOCITY, INITIAL_VELOCITY)
             dy = random.uniform(-INITIAL_VELOCITY, INITIAL_VELOCITY)
-            self.animal_sprite = arcade.Sprite("assets/{animal}.png".format(animal=animal), 0.5)
-            self.animal_sprite.center_x = x
-            self.animal_sprite.center_y = y
-            self.animal_sprite.dx = dx
-            self.animal_sprite.dy = dy
-            self.animal_sprite.mass = 1
-            self.animal_list.append(self.animal_sprite)            
+            self.enemy_sprite = arcade.Sprite("assets/{enemy}.jpg".format(enemy=enemy), 0.5)
+            self.enemy_sprite.center_x = x
+            self.enemy_sprite.center_y = y
+            self.enemy_sprite.dx = dx
+            self.enemy_sprite.dy = dy
+            self.enemy_sprite.mass = 1
+            self.enemy_list.append(self.enemy_sprite)            
 
     def update(self, delta_time):
-        for a in self.animal_list:
+        for a in self.enemy_list:
             a.center_x += a.dx
             a.center_y += a.dy
 
 
 
-            collisions = a.collides_with_list(self.animal_list)
+            collisions = a.collides_with_list(self.enemy_list)
             for c in collisions:
                 tx = a.dx
                 ty = a.dy
@@ -78,7 +77,7 @@ class Window(arcade.Window):
 
     def on_draw(self):
         arcade.start_render()
-        self.animal_list.draw()
+        self.enemy_list.draw()
 
 
 
