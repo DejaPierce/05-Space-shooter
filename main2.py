@@ -1,4 +1,4 @@
-import sys, logging, os, random, math, open_color, arcade
+import sys, logging, random, open_color, arcade
 
 #check to make sure we are running the right version of Python
 version = (3,7)
@@ -10,123 +10,79 @@ logger = logging.getLogger(__name__)
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-MARGIN = 30
-SCREEN_TITLE = "Bullet exercise"
+MARGIN = 20
+INITIAL_VELOCITY = 3
+NUM_ANIMALS = 5
+SCREEN_TITLE = "Collision Exercise"
 
-NUM_ENEMIES = 5
-STARTING_LOCATION = (400,100)
-BULLET_DAMAGE = 10
-ENEMY_HP = 100
-PLAYER_HP = 100
-HIT_SCORE = 10
-KILL_SCORE = 100
-
-class Bullet(arcade.Sprite):
-    def __init__(self, position, velocity, damage):
-        ''' 
-        initializes the bullet
-        Parameters: position: (x,y) tuple
-            velocity: (dx, dy) tuple
-            damage: int (or float)
-        '''
-        super().__init__("assets/new_bullet.png", 0.5)
-        (self.center_x, self.center_y) = position
-        (self.dx, self.dy) = velocity
-        self.damage = damage
-
-    def update(self):
-        '''
-        Moves the bullet
-        '''
-        self.center_x += self.dx
-        self.center_y += self.dy
-
-
-    
-class Player(arcade.Sprite):
-    def __init__(self):
-        super().__init__("assets/ship.png", 0.5)
-        self.hp = PLAYER_HP
-        (self.center_x, self.center_y) = STARTING_LOCATION
-
-class Enemy(arcade.Sprite):
-    def __init__(self, position):
-        '''
-        initializes a penguin enemy
-        Parameter: position: (x,y) tuple
-        '''
-        super().__init__("assets/ship5.png", 0.5)
-        self.hp = ENEMY_HP
-        (self.center_x, self.center_y) = position
-     
-
-        
-
+   
 
 class Window(arcade.Window):
 
     def __init__(self, width, height, title):
         super().__init__(width, height, title)
-        file_path = os.path.dirname(os.path.abspath(__file__))
-        os.chdir(file_path)
-
         self.set_mouse_visible(True)
         arcade.set_background_color(open_color.blue_4)
-        self.bullet_list = arcade.SpriteList()
-        self.enemy_list = arcade.SpriteList()
-        self.player = Player()
-        self.score = 0
-        self.health = 100
-        self.health = self.health - 10
-        self.enemy_bullet_list = arcade.SpriteList()
-
+        self.animal_list = arcade.SpriteList()
 
     def setup(self):
-        '''
-        Set up enemies
-        '''
-        for i in range(NUM_ENEMIES):
-            x = 120 * (i+1) + 40
-            y = 500
-            enemy = Enemy((x,y))
-            self.enemy_list.append(enemy)            
+        animals = ['bear','buffalo','chick','chicken','cow','crocodile','dog','duck','elephant','frog','giraffe','goat','gorilla','hippo','horse','monkey','moose','narwhal','owl','panda','parrot','penguin','pig','rabbit','rhino','sloth','snake','walrus','whale','zebra']
+
+        for i in range(NUM_ANIMALS):
+            animal = random.choice(animals)
+            x = random.randint(MARGIN,SCREEN_WIDTH-MARGIN)
+            y = random.randint(MARGIN,SCREEN_HEIGHT-MARGIN)
+            dx = random.uniform(-INITIAL_VELOCITY, INITIAL_VELOCITY)
+            dy = random.uniform(-INITIAL_VELOCITY, INITIAL_VELOCITY)
+            self.animal_sprite = arcade.Sprite("assets/{animal}.png".format(animal=animal), 0.5)
+            self.animal_sprite.center_x = x
+            self.animal_sprite.center_y = y
+            self.animal_sprite.dx = dx
+            self.animal_sprite.dy = dy
+            self.animal_sprite.mass = 1
+            self.animal_list.append(self.animal_sprite)            
 
     def update(self, delta_time):
-        self.bullet_list.update()
-        self.enemy_bullet_list.update()
+        for a in self.animal_list:
+            a.center_x += a.dx
+            a.center_y += a.dy
 
-        for e in self.enemy_list:
 
-            damage = arcade.check_for_collision_with_list(e, self.bullet_list)
-            for d in damage:
-                e.hp = e.hp - d.damage
-                d.kill()
-                if e.hp < 0:
-                    e.kill()
-                    self.score = self.score + KILL_SCORE
-                else:
-                    self.score = self.score + HIT_SCORE
-   
+
+            collisions = a.collides_with_list(self.animal_list)
+            for c in collisions:
+                tx = a.dx
+                ty = a.dy
+                a.dx = c.dx 
+                a.dy = c.dy 
+                c.dx = tx
+                c.dy = ty
+                pass
+
+            if a.center_x <= MARGIN:
+                a.center_x = MARGIN
+                a.dx = abs(a.dx)
+            if a.center_x >= SCREEN_WIDTH - MARGIN:
+                a.center_x = SCREEN_WIDTH - MARGIN
+                a.dx = abs(a.dx)*-1
+            if a.center_x <= MARGIN:
+                a.center_x = MARGIN
+                a.dx = abs(a.dx)
+            if a.center_y <= MARGIN:
+                a.center_y = MARGIN
+                a.dy = abs(a.dy)
+            if a.center_y >= SCREEN_HEIGHT - MARGIN:
+                a.center_y = SCREEN_HEIGHT - MARGIN
+                a.dy = abs(a.dy)*-1
+
 
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_text(str(self.score), 20, SCREEN_HEIGHT - 40, open_color.white, 16)
-        self.player.draw()
-        self.bullet_list.draw()
-        self.enemy_list.draw()
+        self.animal_list.draw()
 
-    def on_mouse_motion(self, x, y, dx, dy):
-        '''
-        The player moves left and right with the mouse
-        '''
-        self.player.center_x = x
 
-    def on_mouse_press(self, x, y, button, modifiers):
-        if button == arcade.MOUSE_BUTTON_LEFT:
-            x = self.player.center_x
-            y = self.player.center_y + 15
-            bullet = Bullet((x,y),(0,10),BULLET_DAMAGE)
-            self.bullet_list.append(bullet)
+
+
 
 def main():
     window = Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)

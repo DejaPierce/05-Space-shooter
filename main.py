@@ -71,7 +71,7 @@ class Window(arcade.Window):
         os.chdir(file_path)
 
         self.set_mouse_visible(True)
-        arcade.set_background_color(open_color.blue_4)
+        arcade.set_background_color(open_color.gray_9)
         self.bullet_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
         self.player = Player()
@@ -89,7 +89,8 @@ class Window(arcade.Window):
             x = 120 * (i+1) + 40
             y = 500
             enemy = Enemy((x,y))
-            self.enemy_list.append(enemy)            
+            self.enemy_list.append(enemy)      
+                  
 
     def update(self, delta_time):
         self.bullet_list.update()
