@@ -10,11 +10,11 @@ logger = logging.getLogger(__name__)
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-MARGIN = 30
+MARGIN = 20
 SCREEN_TITLE = "Space Shooter"
 
+NUM_ENEMIES = 20
 INITIAL_VELOCITY = 3
-NUM_ENEMIES = 6
 STARTING_LOCATION = (400,100)
 BULLET_DAMAGE = 10
 ENEMY_HP = 100
@@ -41,29 +41,27 @@ class Bullet(arcade.Sprite):
         '''
         self.center_x += self.dx
         self.center_y += self.dy
-
+        
 
     
 class Player(arcade.Sprite):
     def __init__(self):
-        super().__init__("assets/mainship.jpg", 0.5)
+        super().__init__("assets/ship.png", 0.5)
         self.hp = PLAYER_HP
         (self.center_x, self.center_y) = STARTING_LOCATION
 
 class Enemy(arcade.Sprite):
-    def __init__(self, position):
+    def __init__(self, hp, position):
         '''
-        initializes a penguin enemy
+        initializes an enemy
         Parameter: position: (x,y) tuple
         '''
-        super().__init__("assets/ship6.jpg", 0.5)
+        super().__init__(0.5)
         self.hp = ENEMY_HP
         (self.center_x, self.center_y) = position
      
 
         
-
-
 class Window(arcade.Window):
 
     def __init__(self, width, height, title):
@@ -72,7 +70,7 @@ class Window(arcade.Window):
         os.chdir(file_path)
 
         self.set_mouse_visible(True)
-        arcade.set_background_color(open_color.gray_0)
+        arcade.set_background_color(open_color.gray_9)
         self.bullet_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
         self.player = Player()
@@ -83,27 +81,29 @@ class Window(arcade.Window):
 
 
     def setup(self):
-        enemyships = ['ship2','ship3','ship4','ship6','ship7']
-        
+        '''
+        Set up enemies
+        '''
+        enemyships = ['enemyship','rock','enemyship2']
         for i in range(NUM_ENEMIES):
             enemy = random.choice(enemyships)
             x = random.randint(MARGIN,SCREEN_WIDTH-MARGIN)
             y = random.randint(MARGIN,SCREEN_HEIGHT-MARGIN)
             dx = random.uniform(-INITIAL_VELOCITY, INITIAL_VELOCITY)
             dy = random.uniform(-INITIAL_VELOCITY, INITIAL_VELOCITY)
-            self.enemy_sprite = arcade.Sprite("assets/{enemyship}.jpg".format(enemy=enemy), 0.5)
+            self.enemy_sprite = arcade.Sprite("assets/{enemy}.png".format(enemy=enemy), 0.5)
             self.enemy_sprite.center_x = x
             self.enemy_sprite.center_y = y
             self.enemy_sprite.dx = dx
             self.enemy_sprite.dy = dy
             self.enemy_sprite.mass = 1
-            self.enemy_list.append(self.enemy_sprite)       
-                  
+            self.enemy_list.append(self.enemy_sprite)            
+            
 
     def update(self, delta_time):
         self.bullet_list.update()
         self.enemy_bullet_list.update()
-
+        
         for e in self.enemy_list:
 
             damage = arcade.check_for_collision_with_list(e, self.bullet_list)
@@ -115,15 +115,15 @@ class Window(arcade.Window):
                     self.score = self.score + KILL_SCORE
                 else:
                     self.score = self.score + HIT_SCORE
-   
-        for a in self.enemy_list:
-            a.center_x += a.dx
-            a.center_y += a.dy
+            
+            for a in self.enemy_list:
+                a.center_x += a.dx
+                a.center_y += a.dy
 
 
 
             collisions = a.collides_with_list(self.enemy_list)
-            for c in collisions:
+            for c in collisions: 
                 tx = a.dx
                 ty = a.dy
                 a.dx = c.dx 
@@ -147,6 +147,7 @@ class Window(arcade.Window):
             if a.center_y >= SCREEN_HEIGHT - MARGIN:
                 a.center_y = SCREEN_HEIGHT - MARGIN
                 a.dy = abs(a.dy)*-1
+                
 
     def on_draw(self):
         arcade.start_render()
@@ -161,6 +162,7 @@ class Window(arcade.Window):
         '''
         self.player.center_x = x
         self.player.center_y = y
+        pass
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
@@ -168,7 +170,8 @@ class Window(arcade.Window):
             y = self.player.center_y + 15
             bullet = Bullet((x,y),(0,10),BULLET_DAMAGE)
             self.bullet_list.append(bullet)
-  
+        pass
+
 def main():
     window = Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     window.setup()
