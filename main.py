@@ -8,169 +8,212 @@ assert sys.version_info >= version, "This script requires at least Python {0}.{1
 logging.basicConfig(format='[%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-MARGIN = 20
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 800
+MARGIN = 40
 SCREEN_TITLE = "Space Shooter"
 
-NUM_ENEMIES = 20
-INITIAL_VELOCITY = 3
-STARTING_LOCATION = (400,100)
-BULLET_DAMAGE = 10
-ENEMY_HP = 100
-PLAYER_HP = 100
-HIT_SCORE = 10
-KILL_SCORE = 100
+SCORE_INCREASE = 0.1
 
-class Bullet(arcade.Sprite):
-    def __init__(self, position, velocity, damage):
-        ''' 
-        initializes the bullet
-        Parameters: position: (x,y) tuple
-            velocity: (dx, dy) tuple
-            damage: int (or float)
-        '''
-        super().__init__("assets/new_bullet.png", 0.5)
-        (self.center_x, self.center_y) = position
-        (self.dx, self.dy) = velocity
-        self.damage = damage
+SHIP_HP = 100
+SHIP_SCALE = 0.8
+SHIP_MAX_Y = SCREEN_HEIGHT // 6
+
+BULLET_SCALE = 0.8
+BULLET_DAMAGE = 1000
+BULLET_SPEED = 10
+
+NUM_ENEMIES = 3
+ENEMY_SCALE = 0.5
+ENEMY_MIN_Y = 500
+ENEMY_MIN_HP = 20
+ENEMY_MAX_HP = 100
+ENEMY_MIN_MASS = 5
+ENEMY_MAX_MASS = 100
+ENEMY_ACCELERATION = 10
+ENEMY_MAX_ACCELERATION = 4
+ENEMY_CHANGE_POS = 0.1
+ENEMY_PROB_SHOOT = 0.1
+
+ENEMY_BULLET_DAMAGE = 10
+ENEMY_BULLET_SPEED = 10
+BULLET_SCALE = 0.5
+
+sign = lambda x: x and (1, -1)[x <0]
+
+class Player(arcade.Sprite):
+    def __init__(self, image, scale, x, y):
+        super().__init__(image, scale)
+        self.center_x = x
+        self.center_y = y 
+        self.dx = 0 
+        self.dy = 0
+        self.target_x = x
+        self.target_y = y
+        
+    def update_target(self, x, y):
+        self.target_x = min(max(MARGIN, x), SCREEN_WIDTH - MARGIN)
+        self.target_y = min(max(MARGIN, y), SHIP_MAX_Y)
 
     def update(self):
-        '''
-        Moves the bullet
-        '''
-        self.center_x += self.dx
-        self.center_y += self.dy
-        
+        if self.center_x != self.target_x:
+            self.center_x = self.target_x
+        if self.center_y != self.target_y:
+            self.center_y = self.target_y 
+        if self.center_x <= MARGIN:
+            self.center_x = MARGIN
+        if self.center_x >= SCREEN_WIDTH - MARGIN:
+            self.center_x = SCREEN_WIDTH - MARGIN
+        if self.center_y <= MARGIN:
+            self.center_y = MARGIN 
 
-    
-class Player(arcade.Sprite):
-    def __init__(self):
-        super().__init__("assets/ship.png", 0.5)
-        self.hp = PLAYER_HP
-        (self.center_x, self.center_y) = STARTING_LOCATION
 
 class Enemy(arcade.Sprite):
-    def __init__(self, hp, position):
-        '''
-        initializes an enemy
-        Parameter: position: (x,y) tuple
-        '''
-        super().__init__(0.5)
-        self.hp = ENEMY_HP
-        (self.center_x, self.center_y) = position
+    def __init__(self, x, y, mass, hp):
+        sprites = ['enemyship', 'enemyship2', 'rock']
+        sprite = random.choice(sprites)
+        super().__init__("assets/{}.png".format(sprite), ENEMY_SCALE)
+        self.center_x = x
+        self.center_y = y
+        self.hp = hp
+        self.mass = mass
+        self.dx = 0
+        self.dy = 0
+        self.target_x = x
+        self.target_y = y 
+        self.acceleration = ENEMY_ACCELERATION / self.mass
+
+    def update_target(self, x, y):
+        self.target_x = min(max(MARGIN, x), SCREEN_WIDTH - MARGIN)
+        self.target_y = min(max(ENEMY_MIN_Y, y), SCREEN_HEIGHT - MARGIN)
+    
+    def update(self):
+        if self.center_x != self.target_x:
+            self.dx += self.acceleration * sign(self.target_x - self.center_x)
+            self.dx = min(self.dx, ENEMY_MAX_ACCELERATION)
+            self.center_x += self.dx
+        if self.center_y != self.target_y:
+            self.dy += self.acceleration * sign(self.target_y - self.center_y)
+            self.dy = min(self.dy, ENEMY_MAX_ACCELERATION)
+            self.center_y += self.dy
+        if self.center_x <= MARGIN:
+            self.center_x = MARGIN
+            self.dx = abs(self.dx)
+        if self.center_x >= SCREEN_WIDTH - MARGIN:
+            self.center_x = SCREEN_WIDTH - MARGIN
+            self.dx = abs(self.dx) * 1
+        if self.center_y <= MARGIN:
+            self.center_y = MARGIN 
+            self.dy = abs(self.dy) * -1 
+
+class Bullet(arcade.Sprite):
+    def __init__(self, image, scale, x, y, dx, dy, damage):
+        super().__init__(image, scale)
+        self.center_x = x
+        self.center_y = y 
+        self.dx = dx
+        self.dy = dy
+        self.damage = damage
+    
+    def update(self):
+        self.center_x += self.dx
+        self.center_y += self.dy
      
-
-        
 class Window(arcade.Window):
-
     def __init__(self, width, height, title):
         super().__init__(width, height, title)
         file_path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(file_path)
-
         self.set_mouse_visible(True)
+
         arcade.set_background_color(open_color.gray_9)
-        self.bullet_list = arcade.SpriteList()
+
+        self.player_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
-        self.player = Player()
-        self.score = 0
-        self.health = 100
-        self.health = self.health - 10
+        self.bullet_list = arcade.SpriteList()
         self.enemy_bullet_list = arcade.SpriteList()
 
 
     def setup(self):
-        '''
-        Set up enemies
-        '''
-        enemyships = ['enemyship','rock','enemyship2']
-        for i in range(NUM_ENEMIES):
-            enemy = random.choice(enemyships)
+        self.playing = True
+        self.score = 0.0
+        self.hp = SHIP_HP
+
+        self.player = Player("assets/ship.png", SHIP_SCALE,SCREEN_WIDTH // 2,100)
+        self.player_list.append(self.player)
+        for e in range(NUM_ENEMIES):
             x = random.randint(MARGIN,SCREEN_WIDTH-MARGIN)
             y = random.randint(MARGIN,SCREEN_HEIGHT-MARGIN)
-            dx = random.uniform(-INITIAL_VELOCITY, INITIAL_VELOCITY)
-            dy = random.uniform(-INITIAL_VELOCITY, INITIAL_VELOCITY)
-            self.enemy_sprite = arcade.Sprite("assets/{enemy}.png".format(enemy=enemy), 0.5)
-            self.enemy_sprite.center_x = x
-            self.enemy_sprite.center_y = y
-            self.enemy_sprite.dx = dx
-            self.enemy_sprite.dy = dy
-            self.enemy_sprite.mass = 1
-            self.enemy_list.append(self.enemy_sprite)            
-            
-
+            hp = random.randint(ENEMY_MIN_HP,ENEMY_MAX_HP)
+            mass = random.randint(ENEMY_MIN_MASS,ENEMY_MAX_MASS)
+            enemy = Enemy(x, y, mass, hp)
+            self.enemy_list(enemy)
+           
+          
     def update(self, delta_time):
+        self.player_list.update()
+        self.enemy_list.update()
         self.bullet_list.update()
         self.enemy_bullet_list.update()
+
+        self.score += SCORE_INCREASE
         
         for e in self.enemy_list:
-
-            damage = arcade.check_for_collision_with_list(e, self.bullet_list)
-            for d in damage:
-                e.hp = e.hp - d.damage
-                d.kill()
-                if e.hp < 0:
-                    e.kill()
-                    self.score = self.score + KILL_SCORE
-                else:
-                    self.score = self.score + HIT_SCORE
+            if random.random() < ENEMY_PROB_SHOOT:
+                self.shoot_enemy_bullet(e)
+            if random.random() < ENEMY_CHANGE_POS:
+                x = random.randint(MARGIN,SCREEN_WIDTH-MARGIN)
+                y = random.randint(SCREEN_HEIGHT-ENEMY_MIN_Y,SCREEN_HEIGHT-MARGIN)
+                e.update_target(x,y)
             
-            for a in self.enemy_list:
-                a.center_x += a.dx
-                a.center_y += a.dy
+            bullets = arcade.check_for_collision_with_list(e, self.bullet_list)
+            for b in bullets:
+                e.hp -= b.damage
+                b.kill()
+            if e.hp <= 0:
+                e.kill()
+        
+        enemy_bullets = arcade.check_for_collision_with_list(self.player, self.enemy_bullet_list)
+        for eb in enemy_bullets:
+            self.hp -= eb.damage
+            eb.kill()
+        if self.hp <= 0:
+            self.hp = 0
+            self.playing = False
 
-
-
-            collisions = a.collides_with_list(self.enemy_list)
-            for c in collisions: 
-                tx = a.dx
-                ty = a.dy
-                a.dx = c.dx 
-                a.dy = c.dy 
-                c.dx = tx
-                c.dy = ty
-                pass
-
-            if a.center_x <= MARGIN:
-                a.center_x = MARGIN
-                a.dx = abs(a.dx)
-            if a.center_x >= SCREEN_WIDTH - MARGIN:
-                a.center_x = SCREEN_WIDTH - MARGIN
-                a.dx = abs(a.dx)*-1
-            if a.center_x <= MARGIN:
-                a.center_x = MARGIN
-                a.dx = abs(a.dx)
-            if a.center_y <= MARGIN:
-                a.center_y = MARGIN
-                a.dy = abs(a.dy)
-            if a.center_y >= SCREEN_HEIGHT - MARGIN:
-                a.center_y = SCREEN_HEIGHT - MARGIN
-                a.dy = abs(a.dy)*-1
-                
-
+    
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_text(str(self.score), 20, SCREEN_HEIGHT - 40, open_color.white, 16)
-        self.player.draw()
+        self.player_list.draw()
         self.bullet_list.draw()
         self.enemy_list.draw()
+        self.enemy_bullet_list.draw()
+
+        arcade.draw_text("Score: {}".format(int(self.score)), 10, SCREEN_HEIGHT - 30, open_color.white, 16)
+        arcade.draw_text("HP: {}".format(int(self.hp)), 100, SCREEN_HEIGHT - 30, open_color.white, 16)
 
     def on_mouse_motion(self, x, y, dx, dy):
-        '''
-        The player moves left and right with the mouse
-        '''
-        self.player.center_x = x
-        self.player.center_y = y
-        pass
+        self.player.update_target(x,y)
+        
 
     def on_mouse_press(self, x, y, button, modifiers):
-        if button == arcade.MOUSE_BUTTON_LEFT:
-            x = self.player.center_x
-            y = self.player.center_y + 15
-            bullet = Bullet((x,y),(0,10),BULLET_DAMAGE)
-            self.bullet_list.append(bullet)
-        pass
+        self.shoot_bullet()
+
+    def shoot_bullet(self):
+        image = "assets/new_bullet.png"
+        x = self.player.center_x
+        y = self.player.center_y + (self.player.height // 2)
+        dy = BULLET_SPEED
+        bullet = Bullet(image, BULLET_SCALE, x, y, 0, dy, BULLET_DAMAGE)
+        self.bullet_list.append(bullet)
+
+    def shoot_enemy_bullet(self,enemy):
+        image = "assets/new_bullet.png"
+        x = self.enemy.center_x
+        y = self.enemy.center_y - (self.player.height // 2)
+        dy = ENEMY_BULLET_SPEED
+        bullet = Bullet(image, BULLET_SCALE, x, y, 0, dy, ENEMY_BULLET_DAMAGE)
+        self.enemy_bullet_list.append(bullet)
 
 def main():
     window = Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)

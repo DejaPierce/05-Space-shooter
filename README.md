@@ -1,2 +1,2 @@
 # 05-Space-shooter
-My first 2D space shooter for game technology class. You must destroy the enemy ships and the rocks in space. Every kill gets you 100 points and every hit gets you 10 points. In the project I was able to get the enemies to move, but once you hit an enemy the window for the space shooter crashes. I tried to go back over our execrises in order to fix this problem, but nothing seemed to work. 
+My first 2D space shooter for game technology class. You must destroy the enemy ships and the rocks in space. Every kill gets you 100 points and every hit gets you 10 points. 
