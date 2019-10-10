@@ -8,8 +8,8 @@ assert sys.version_info >= version, "This script requires at least Python {0}.{1
 logging.basicConfig(format='[%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 800
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
 MARGIN = 40
 SCREEN_TITLE = "Space Shooter"
 
@@ -23,7 +23,7 @@ BULLET_SCALE = 0.8
 BULLET_DAMAGE = 1000
 BULLET_SPEED = 10
 
-NUM_ENEMIES = 3
+NUM_ENEMIES = 5
 ENEMY_SCALE = 0.5
 ENEMY_MIN_Y = 500
 ENEMY_MIN_HP = 20
@@ -39,7 +39,7 @@ ENEMY_BULLET_DAMAGE = 10
 ENEMY_BULLET_SPEED = 10
 BULLET_SCALE = 0.5
 
-sign = lambda x: x and (1, -1)[x <0]
+sign = lambda x: x and (1, -1)[x < 0]
 
 class Player(arcade.Sprite):
     def __init__(self, image, scale, x, y):
@@ -147,7 +147,7 @@ class Window(arcade.Window):
             hp = random.randint(ENEMY_MIN_HP,ENEMY_MAX_HP)
             mass = random.randint(ENEMY_MIN_MASS,ENEMY_MAX_MASS)
             enemy = Enemy(x, y, mass, hp)
-            self.enemy_list(enemy)
+            self.enemy_list.append(enemy)
            
           
     def update(self, delta_time):
