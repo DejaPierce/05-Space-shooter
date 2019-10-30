@@ -1,0 +1,36 @@
+Name:Mark Borkowski
+Date:10/30/19
+Project: Space Shooter Peer-Evaluation
+Peer's repository: https://github.com/DejaPierce/05-Space-Shooter.git
+
+
+What is something you learned by reviewing your peer's project?
+It really helps reviewers to be able to review an atleast partially working game/program or add comments or a section in the README.md about what they believe the bug was. 
+ 
+
+What is something you saw in your peer's project that you would like to apply to your own programming projects?
+I really like their assests for their game. 
+ 
+
+What suggestions would you have for your peer to improve his/her code?
+I seems like there is a problem with some image file "[PngImagePlugin.py:146] STREAM b'IHDR' 16 13" and AttributeError: 'Window' object has no attribute 'enemy' which leads me to believe there is a problem in the window class in which enemy is not defined correctly. 
+ 
+
+What could have been clearer or better commented?
+The README.md and just comments in general would help. 
+ 
+
+Was there anything in the code that was confusing to you? If so, what?
+I was a little confused by the shooting enemies just because I did not implment this feature myself. 
+ 
+
+Does the repository contain an appropriate LICENSE?
+Yes!
+ 
+
+What is something he/she could add to the README.md to make it more descriptive?
+Adding somehting about where they left off would help me figure out how I could try to fix it. 
+ 
+
+Pay a compliment to your peer based on the quality of his/her code.
+I really enjoyed their game ;)
